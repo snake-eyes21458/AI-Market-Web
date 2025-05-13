@@ -79,7 +79,10 @@
       const ctx = document.getElementById(canvasId).getContext('2d');
       const labels = Object.keys(dataObj);
       const values = Object.values(dataObj);
-      new Chart(ctx, {
+      if (window.barChart) {
+        window.barChart.destroy();
+      }
+      window.barChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels,
@@ -101,7 +104,10 @@
 
     function renderLineChart(canvasId, label, trend) {
       const ctx = document.getElementById(canvasId).getContext('2d');
-      new Chart(ctx, {
+      if (window.lineChart) {
+        window.lineChart.destroy();
+      }
+      window.lineChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: trend.labels.map(label => label.length === 4 ? label : label),
@@ -130,7 +136,12 @@
         const percent = ((values[i] / total) * 100).toFixed(1);
         return `${label} (${percent}%)`;
       });
-      new Chart(ctx, {
+
+      if (window.competitorChart instanceof Chart) {
+        window.competitorChart.destroy();
+      }
+
+      window.competitorChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: dataLabels,
@@ -151,6 +162,7 @@
         }
       });
     }
+
 
     function downloadCSV() {
       const rows = [

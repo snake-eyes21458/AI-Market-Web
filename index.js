@@ -29,7 +29,7 @@ function extractJSON(text) {
 app.get('/api/market-data', async (req, res) => {
   const type = req.query.type?.trim() || 'generic';
   try {
-    const prompt = `You are a market analyst assistant. For the product category "${type}", return a realistic JSON object with the following structure:
+    const prompt = `You are a market analyst and product manager for a company trying to determine if there is an opportunity to be sucessful by launching a new product category. For the product category "${type}", return a realistic JSON object with the following structure:
 
 - competitors: An array of the top 5 current real-world brand or company names currently selling this type of product (avoid fictional names and discontinued product lines)
 - avgPrice: Realistic average retail price in USD based on typical consumer pricing
