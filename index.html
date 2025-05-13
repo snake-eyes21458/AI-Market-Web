@@ -22,19 +22,22 @@
     <div id="progressBar" style="width:0%; height:10px; background:#3498db;"></div>
   </div>
   <button onclick="analyze()">Analyze</button>
+  <button onclick="downloadCSV()">Download CSV</button>
 
   <div class="results" id="results" style="display:none">
     <h2>Results</h2>
-    <p><strong>Competitors:</strong> <span id="competitors"></span></p>
+        <p><strong>Competitors:</strong> <span id="competitors"></span></p>
     <p><strong>Average Price (USD):</strong> $<span id="avgPrice"></span></p>
     <p><strong>Repair Rate:</strong> <span id="repairRate"></span>%</p>
     <p><strong>Opportunity Score:</strong> <span id="opportunityScore"></span>/100</p>
+    <p><strong>Why this score?</strong> <span id="opportunityExplanation"></span></p>
     <p><strong>Recommendation:</strong> <span id="recommendation"></span></p>
     <p><strong>Trend Growth:</strong> <span id="trendGrowthPercent"></span>%</p>
 
     <canvas id="salesChart"></canvas>
     <canvas id="trendChart"></canvas>
-  </div>
+    <canvas id="competitorChart"></canvas>
+      </div>
 
   <script>
     async function analyze() {
@@ -43,7 +46,6 @@
       document.getElementById('progressBarContainer').style.display = 'block';
       document.getElementById('progressBar').style.width = '0%';
 
-      // Animate progress bar to simulate loading
       let progress = 0;
       const interval = setInterval(() => {
         progress += Math.random() * 10;
@@ -54,19 +56,23 @@
       const res = await fetch('/api/market-data?type=' + encodeURIComponent(type));
       const data = await res.json();
 
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('competitors').textContent = data.competitors.join(', ');
-      document.getElementById('avgPrice').textContent = data.avgPrice;
-      document.getElementById('repairRate').textContent = data.repairRate;
-      document.getElementById('opportunityScore').textContent = data.opportunityScore;
-      document.getElementById('recommendation').textContent = data.recommendation;
-      document.getElementById('trendGrowthPercent').textContent = data.trendGrowthPercent;
       clearInterval(interval);
       document.getElementById('progressBar').style.width = '100%';
       setTimeout(() => document.getElementById('progressBarContainer').style.display = 'none', 500);
 
-      renderBarChart('salesChart', 'Annual Sales by Region (Units)', data.salesByCountry);
-      renderLineChart('trendChart', 'Estimated Monthly Search Volume (Thousands)', data.trendData);
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('competitors').textContent = data.competitors?.join(', ') || 'N/A';
+      document.getElementById('avgPrice').textContent = data.avgPrice || 'N/A';
+      document.getElementById('repairRate').textContent = data.repairRate || 'N/A';
+      document.getElementById('opportunityScore').textContent = data.opportunityScore || 'N/A';
+      document.getElementById('opportunityExplanation').textContent = data.opportunityExplanation || 'N/A';
+      document.getElementById('recommendation').textContent = data.recommendation || 'N/A';
+      document.getElementById('trendGrowthPercent').textContent = data.trendGrowthPercent || 'N/A';
+
+
+      renderBarChart('salesChart', 'Annual Sales by Region (Units)', data.salesByCountry || {});
+      renderLineChart('trendChart', 'Estimated Monthly Search Volume (Thousands)', data.trendData || { labels: [], values: [] });
+      renderPieChart('competitorChart', 'Market Share by Competitor', data.competitorShares || []);
     }
 
     function renderBarChart(canvasId, label, dataObj) {
@@ -114,6 +120,64 @@
         }
       });
     }
+
+    function renderPieChart(canvasId, label, shares) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const labels = shares.map(s => s.name);
+      const values = shares.map(s => s.share);
+      const total = values.reduce((a, b) => a + b, 0);
+      const dataLabels = labels.map((label, i) => {
+        const percent = ((values[i] / total) * 100).toFixed(1);
+        return `${label} (${percent}%)`;
+      });
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: dataLabels,
+          datasets: [{
+            label,
+            data: values,
+            backgroundColor: [
+              '#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6',
+              '#1abc9c', '#e67e22', '#34495e', '#7f8c8d', '#8e44ad'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: label }
+          }
+        }
+      });
+    }
+
+    function downloadCSV() {
+      const rows = [
+        ["Competitors", document.getElementById('competitors').textContent],
+        ["Average Price (USD)", document.getElementById('avgPrice').textContent],
+        ["Repair Rate (%)", document.getElementById('repairRate').textContent],
+        ["Opportunity Score", document.getElementById('opportunityScore').textContent],
+        ["Opportunity Explanation", document.getElementById('opportunityExplanation').textContent],
+        ["Recommendation", document.getElementById('recommendation').textContent],
+        ["Trend Growth (%)", document.getElementById('trendGrowthPercent').textContent],
+
+      ];
+
+      const csvContent = 'data:text/csv;charset=utf-8,' +
+        rows.map(e => e.map(cell => '"' + cell.replace(/"/g, '""') + '"').join(",")).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "market_analysis.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
 </body>
 </html>
+
+
+
