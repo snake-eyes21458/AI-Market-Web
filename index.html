@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Market Intelligence Analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    input, button { padding: 8px; margin-right: 8px; }
+    .results { margin-top: 20px; }
+    ul { margin: 0; padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Market Intelligence Analyzer</h1>
+  <div>
+    <label for="productType">Product Type:</label>
+    <input type="text" id="productType" placeholder="e.g., thermostats" />
+    <button onclick="analyze()">Analyze</button>
+  </div>
+
+  <div class="results">
+    <h2>Results</h2>
+    <p><strong>Competitors:</strong> <span id="competitors"></span></p>
+    <p><strong>Average Price:</strong> $<span id="avgPrice"></span></p>
+    <p><strong>Repair Rate:</strong> <span id="repairRate"></span>%</p>
+    <p><strong>Opportunity Score:</strong> <span id="opportunityScore"></span></p>
+    <p><strong>Market Entry Recommendation:</strong> <em id="recommendation"></em></p>
+    <p><strong>Sales by Country:</strong></p>
+    <canvas id="salesChart" width="600" height="300"></canvas>
+    <p><strong>Competitor Market Share:</strong></p>
+    <ul id="competitorShares"></ul>
+    <p><strong>Search Trends:</strong></p>
+    <canvas id="trendChart" width="600" height="300"></canvas>
+  </div>
+
+  <script>
+    async function analyze() {
+      const type = document.getElementById('productType').value;
+      const res = await fetch('/api/market-data?type=' + encodeURIComponent(type));
+      const data = await res.json();
+
+      document.getElementById('competitors').textContent = data.competitors.join(', ');
+      document.getElementById('avgPrice').textContent = data.avgPrice.toFixed(2);
+      document.getElementById('repairRate').textContent = data.repairRate;
+      document.getElementById('opportunityScore').textContent = data.opportunityScore;
+      document.getElementById('recommendation').textContent = data.recommendation;
+
+      const shareList = document.getElementById('competitorShares');
+      shareList.innerHTML = '';
+      data.competitorShares.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = entry.name + ': ' + entry.share + '%';
+        shareList.appendChild(li);
+      });
+
+      renderChart({
+        labels: Object.keys(data.salesByCountry),
+        values: Object.values(data.salesByCountry)
+      }, 'salesChart', 'Sales by Country');
+
+      renderChart({ labels: data.trendData.labels, values: data.trendData.values }, 'trendChart', 'Search Trends');
+    }
+
+    function renderChart(data, elementId, label) {
+      const ctx = document.getElementById(elementId).getContext('2d');
+      const config = {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label,
+            data: data.values,
+            borderColor: 'blue',
+            backgroundColor: 'rgba(0,0,255,0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true }
+      };
+      new Chart(ctx, config);
+    }
+  </script>
+</body>
+</html>
