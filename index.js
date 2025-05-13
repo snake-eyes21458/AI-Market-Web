@@ -41,7 +41,10 @@ app.get('/api/market-data', async (req, res) => {
 - recommendation: 1–2 sentence insightful market entry strategy (e.g. targeting underserved markets or unique positioning)
 - trendData: Object with:
     - labels: A sequence of 24 recent monthly points ending with the current month and year (e.g. ["Jan 2025", "Feb 2025", ..., "Dec 2025"])
-    - values: Matching integers showing estimated **monthly search volume in thousands** for each month (e.g. [120, 130, 125, 140, ...]) reflecting growth, seasonality, and saturation (e.g., higher searches for heating products in colder months, AC-related products in summer). Adjust seasonality to fit the product type and geography (assume North America unless stated otherwise)
+    - values: Estimated monthly search volumes in thousands. Adjust for seasonality. For example:
+        - Automotive thermostats should peak in colder months (Nov–Feb) and dip in summer (Jun–Aug).
+        - HVAC, heating, or winter-related products should show stronger interest in Q4–Q1.
+        - Ensure values reflect real-world trends in North America, not generic patterns.
 
 Focus on realism. Ensure sales and trends reflect product type, geographic market size, and industry seasonality. Only return valid JSON — no explanation.`;
 
@@ -49,7 +52,7 @@ Focus on realism. Ensure sales and trends reflect product type, geographic marke
       model: 'command-r-plus',
       prompt: prompt,
       maxTokens: 800,
-      temperature: 0.3
+      temperature: 0.2
     });
 
     const content = response.generations[0].text;
